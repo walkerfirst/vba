@@ -21,7 +21,6 @@ def run_vba_code(excel_file,macro_name):
     # 修改数据
     sheet.Cells(2, 1).Value = data['chinese']
     sheet.Cells(2, 2).Value = data['name']
-    sheet.Cells(2, 3).Value = '上海盛傲化学有限公司'
     sheet.Cells(2, 4).Value = tax
     sheet.Cells(2, 5).Value = data['express']
     sheet.Cells(2, 6).Value = data['waybill']
