@@ -13,16 +13,24 @@ def run_vba_code(excel_file,macro_name):
     wb = excel.Workbooks.Open(excel_file)
     # 选择指定名称的工作表
     sheet = wb.Sheets('data')
-    if data['tax']==1.0:
+    if data['tax'] == 1.0:
         tax = '要退税'
     else:
         tax = '不退税'
-    print(datetime.now())
+
+    if data['express'] == 'DHL':
+        express = 'DHL'
+    elif data['express'] == '空运':
+        express = 'by air'
+    elif data['express'] == '海运':
+        express = 'by sea'
+    else:
+        express = data['express']
     # 修改数据
     sheet.Cells(2, 1).Value = data['chinese']
     sheet.Cells(2, 2).Value = data['name']
     sheet.Cells(2, 4).Value = tax
-    sheet.Cells(2, 5).Value = data['express']
+    sheet.Cells(2, 5).Value = express
     sheet.Cells(2, 6).Value = data['waybill']
     sheet.Cells(2, 7).Value = data['pcs']
     sheet.Cells(2, 8).Value = data['package']
@@ -36,6 +44,7 @@ def run_vba_code(excel_file,macro_name):
     sheet.Cells(2, 16).Value = data['place']
     sheet.Cells(2, 17).Value = data['date']
     sheet.Cells(2, 18).Value = data['total']
+    sheet.Cells(2, 19).Value = data['order_id']
     print(datetime.now())
     excel.Application.Run(macro_name)
     wb.Save()
