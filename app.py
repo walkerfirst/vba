@@ -1,16 +1,26 @@
 # pip install pywin32
 import win32com.client
-from config import excel_file
+# 注意这里选择从
+from config import shipment_file
 from db import read_db,conn
 from datetime import datetime
-def run_vba_code(excel_file,macro_name):
-    print(datetime.now())
+
+def run():
+    # 获取发货信息
     sql = 'select * from shipView where id=1'
-    data = read_db(sql, conn)[0]
+    ship_dict = read_db(sql, conn)[0]
+    if ship_dict['model'] == '发货':
+        # 指定执行VBA文件和 function
+        macro_name = "保存发票等文件.保存清关发票"
+        run_vba_code(data=ship_dict,macro_name=macro_name)
+
+def run_vba_code(data,macro_name):
+    print(datetime.now())
+
     print(datetime.now())
     excel = win32com.client.Dispatch("Excel.Application")
     excel.Visible = False  # 可以设置为 True 调试
-    wb = excel.Workbooks.Open(excel_file)
+    wb = excel.Workbooks.Open(shipment_file)
     # 选择指定名称的工作表
     sheet = wb.Sheets('data')
     if data['tax'] == 1.0:
@@ -50,10 +60,8 @@ def run_vba_code(excel_file,macro_name):
     wb.Save()
     wb.Close()
     print(datetime.now())
-    excel.Quit()
+    # excel.Quit()
 
 if __name__ == '__main__':
 
-    # 指定要打开的 Excel 文件路径
-    macro_name = "保存发票等文件.保存清关发票"
-    run_vba_code(excel_file,macro_name)
+    run()
