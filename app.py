@@ -1,7 +1,7 @@
 # pip install pywin32
 import win32com.client
 # 注意这里选择从
-from config import shipment_file
+from config import shipment_file_dir
 from db import read_db,conn
 from datetime import datetime
 
@@ -15,18 +15,13 @@ def run():
         run_vba_code(data=ship_dict,macro_name=macro_name)
 
 def run_vba_code(data,macro_name):
-    print(datetime.now())
 
-    print(datetime.now())
-    excel = win32com.client.Dispatch("Excel.Application")
-    excel.Visible = False  # 可以设置为 True 调试
-    wb = excel.Workbooks.Open(shipment_file)
-    # 选择指定名称的工作表
-    sheet = wb.Sheets('data')
     if data['tax'] == 1.0:
         tax = '要退税'
+        shipment_file = shipment_file_dir + "shipment.xlsm"
     else:
         tax = '不退税'
+        shipment_file = shipment_file_dir + "shipment买单.xlsm"
 
     if data['express'] == 'DHL':
         express = 'DHL'
@@ -36,7 +31,13 @@ def run_vba_code(data,macro_name):
         express = 'by sea'
     else:
         express = data['express']
-    # 修改数据
+    # 定义 workbooks 对象
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False  # 可以设置为 True 调试
+    wb = excel.Workbooks.Open(shipment_file)
+    # 选择指定名称的工作表
+    sheet = wb.Sheets('data')
+    # 修改sheet单元格数据
     sheet.Cells(2, 1).Value = data['chinese']
     sheet.Cells(2, 2).Value = data['name']
     sheet.Cells(2, 4).Value = tax
@@ -55,11 +56,11 @@ def run_vba_code(data,macro_name):
     sheet.Cells(2, 17).Value = data['date']
     sheet.Cells(2, 18).Value = data['total']
     sheet.Cells(2, 19).Value = data['order_id']
-    print(datetime.now())
+    # 运行VBS程序
     excel.Application.Run(macro_name)
     wb.Save()
     wb.Close()
-    print(datetime.now())
+    # print(datetime.now())
     # excel.Quit()
 
 if __name__ == '__main__':
