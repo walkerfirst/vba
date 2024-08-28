@@ -1,7 +1,7 @@
 # pip install pywin32
 import win32com.client
 # 注意这里选择从
-from config import shipment_file_dir
+from config import shipment_file
 from db import read_db,conn
 from datetime import datetime
 
@@ -15,17 +15,13 @@ def run():
         run_vba_code(data=ship_dict,macro_name=macro_name)
 
 def run_vba_code(data,macro_name):
-
+    
     if data['tax'] == 1.0:
         tax = '要退税'
-        shipment_file = shipment_file_dir + "shipment.xlsm"
     else:
         tax = '不退税'
-        shipment_file = shipment_file_dir + "shipment买单.xlsm"
 
-    if data['express'] == 'DHL':
-        express = 'DHL'
-    elif data['express'] == '空运':
+    if data['express'] == '空运':
         express = 'by air'
     elif data['express'] == '海运':
         express = 'by sea'
@@ -35,9 +31,19 @@ def run_vba_code(data,macro_name):
     excel = win32com.client.Dispatch("Excel.Application")
     excel.Visible = False  # 可以设置为 True 调试
     wb = excel.Workbooks.Open(shipment_file)
-    # 选择指定名称的工作表
+    # 定义工作表
     sheet = wb.Sheets('data')
-    # 修改sheet单元格数据
+    sm = wb.Sheets('情况说明')
+    sheet1 = wb.Sheets('sheet1')
+
+    # 修改sheet1单元格数据，让产品种类初始化为1
+    sheet1.Cells(9,9).Value = 1
+    sheet1.Cells(14,3).Value = data['chinese']
+
+    # 修改情况说明页面的单元格数据，让产品初始化为1
+    sm.Cells(1,21).Value = 1
+
+    # data 页面单元格赋值
     sheet.Cells(2, 1).Value = data['chinese']
     sheet.Cells(2, 2).Value = data['name']
     sheet.Cells(2, 4).Value = tax
