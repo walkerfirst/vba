@@ -1,3 +1,4 @@
 file/*.*
 run.VBS
 run.VBS - 快捷方式.lnk
+__pycache__/*.*
