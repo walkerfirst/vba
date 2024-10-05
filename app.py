@@ -19,11 +19,17 @@ def run():
         run_vba_code(data=ship_dict,macro_name=macro_name)
 
 def run_vba_code(data,macro_name):
-    
+        # 定义 workbooks 对象
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False  # 可以设置为 True 调试
+    wb = excel.Workbooks.Open(shipment_file)
     if data['tax'] == 1.0:
         tax = '要退税'
+        data['trade'] = "一般贸易"
+        company = "上海盛傲化学有限公司"
     else:
         tax = '不退税'
+        company = wb.Sheets('报关公司').Cells(4,1).Value
 
     if data['express'] == '空运':
         express = 'by air'
@@ -31,11 +37,9 @@ def run_vba_code(data,macro_name):
         express = 'by sea'
     else:
         express = data['express']
-    # 定义 workbooks 对象
-    excel = win32com.client.Dispatch("Excel.Application")
+
     try:
-        excel.Visible = False  # 可以设置为 True 调试
-        wb = excel.Workbooks.Open(shipment_file)
+
         # 定义工作表
         sheet = wb.Sheets('data')
         sm = wb.Sheets('情况说明')
@@ -51,6 +55,7 @@ def run_vba_code(data,macro_name):
         # data 页面单元格赋值
         sheet.Cells(2, 1).Value = data['chinese']
         sheet.Cells(2, 2).Value = data['name']
+        sheet.Cells(2, 3).Value = company
         sheet.Cells(2, 4).Value = tax
         sheet.Cells(2, 5).Value = express
         sheet.Cells(2, 6).Value = data['waybill']
