@@ -1,0 +1,234 @@
+Sub 保存清关发票()
+'将发票和COF
+' 保存单据到pdf Macro
+Call 设置文本框内容
+Call DefineGlobalVariables
+'FapiaoPath = "Z:\工作\发票\"
+'FatherPath = "Z:\工作"
+
+Dim Y1, V, S, trading
+    company = Sheets("sheet1").Range("C9") '发件公司
+    express = Sheets("sheet1").Range("C11") '运输商
+    Model = Sheets("sheet1").Range("I11") '贸易方式
+    Tax = Sheets("sheet1").Range("E14") '是否退税
+    tracing = Sheets("sheet1").Range("C12") '单号
+    
+    name = Sheets("sheet1").Range("C15") ' 申报名称
+    Name2 = Sheets("sheet1").Range("C16") ' 申报名称
+    Package = Sheets("sheet1").Range("C20") '包装类型
+    Class = Sheets("sheet1").Range("I9") '货物种类数量
+    pcs = Sheets("sheet1").Range("L11") '包裹数量
+    NW = Sheets("invoice").Range("G29") '总净重
+    GW = Sheets("PL").Range("K29") '总毛重
+    V = Sheets("sheet1").Range("L9") '总报关价值
+    Y1 = Sheets("invoice").Range("E5") '发票号码
+    order_id = Sheets("data").Range("S2") '订单id
+    
+     Printer = "HP LaserJet Professional M1213nf MFP"
+     'Printer = "Foxit PhantomPDF Printer"
+     
+     Set sm = ThisWorkbook.Sheets("情况说明")
+        
+        
+If MsgBox("注意: " & Tax & Chr(10) & "发件抬头：" & company & Chr(10) & "贸易方式：" & Model & Chr(10) & Chr(10) & "运输商：" & express & Chr(10) & "单号：" & tracing & Chr(10) & "申报名称：" & name & Chr(10) & "真实品名：" & Name2 & Chr(10) & Chr(10) & "包装：" & Package & Chr(10) & "总价值：" & V & Chr(10) & "总件数: " & pcs & Chr(10) & "总净重：" & NW & Chr(10) & "总毛重：" & GW, vbOKCancel) = vbOK Then
+    
+         '设置成交方式和运费
+         'If express = "DHL" Then
+            'trading = "FOB"
+            'freight = ""
+         'Else
+            'trading = "CNF"
+            'If V <= 700 Then
+                'freight = "USD" & Min(Int(V * 30), 70)
+            'ElseIf V > 5000 Then
+                'freight = "USD" & Min(Int(V * 10), 400)
+           ' Else
+                'freight = "USD" & Min(Int(V * 10), 200)
+           ' End If
+            
+         'End If
+         
+         '将 trading 和 freight 填充到表格中
+         'Sheets("报关单").Range("U16") = trading
+         
+        'Sheets("报关单").Range("X16") = freight
+         
+         
+         '如果是DHL 还需要打印发货文件
+    
+        If MsgBox("如果为DHL，确认开始打印情况说明，否则请点确认", vbOKCancel) = vbOK Then
+ 
+            sm.Range("U1") = 1
+            '保存给客户的发票
+            Sheets("invoice(2)").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+            FapiaoPath & express & "_" & tracing & "_" & Y1 & "_invoice.pdf" '输出给客户使用的invoce文件
+                
+            Sheets("CI").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+            FapiaoPath & express & "_" & tracing & "_" & Y1 & "_commercial invoice.pdf" '输出给客户使用的invoce文件
+            If express = "DHL" Then
+                Sheets("标签").Range("H3") = "YES"
+                Sheets("标签").Range("H6") = "YES"
+                '打印情况说明
+                sm.PrintOut copies:=2, ActivePrinter:=Printer
+                
+            End If
+            Set ws = ThisWorkbook.Sheets("情况说明fedex")
+            
+            ' 如果有两种产品
+            If Class > 1 Then
+                ws.Shapes("结构式二").Visible = True '显示结构式
+                sm.Range("U1") = 2
+                Y2 = Sheets("sheet1").Range("I41") '第二个产品发票号码
+                Sheets("invoice(2)").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                FapiaoPath & express & "_" & tracing & "_" & Y2 & "_invoice.pdf" '输出给客户使用的invoce文件
+                Sheets("CI").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                FapiaoPath & express & "_" & tracing & "_" & Y2 & "_commercial invoice.pdf" '输出给客户使用的invoce文件
+                If express = "DHL" Then
+                    Sheets("标签").Range("H3") = "NO"
+                    sm.PrintOut copies:=2, ActivePrinter:=Printer
+                    
+                End If
+                
+                
+                    ' 如果有三种产品
+                    If Class > 2 Then
+                    
+                        ws.Shapes("结构式三").Visible = True '显示结构式
+                        
+                        sm.Range("U1") = 3
+                        Y3 = Sheets("sheet1").Range("L41") '第二个产品发票号码
+                        Sheets("invoice(2)").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                        FapiaoPath & express & "_" & tracing & "_" & Y3 & "_invoice.pdf" '输出给客户使用的invoce文件
+                        Sheets("CI").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                        FapiaoPath & express & "_" & tracing & "_" & Y3 & "_commercial invoice.pdf" '输出给客户使用的invoce文件
+                        If express = "DHL" Then
+                            Sheets("标签").Range("H3") = "NO"
+                            sm.PrintOut copies:=2, ActivePrinter:=Printer
+                        End If
+                    Else
+                        ws.Shapes("结构式三").Visible = False '不显示结构式
+                    End If
+            Else
+                ws.Shapes("结构式二").Visible = False
+                ws.Shapes("结构式三").Visible = False
+            End If
+        
+        End If
+        
+         '如果是快递，还需要生产在线申报文件
+         
+         result = InStr(1, express, "by", vbTextCompare) ' 不区分大小写
+         
+         'MsgBox ("express result:" & result)
+         
+         If result = 0 Then '表示exress 为 DHL 或者 FedEx
+         
+            If express = "DHL" Then
+                If MsgBox("开始打印标签（外包装）？", vbOKCancel) = vbOK Then
+                    
+                    '设置标签打印区域
+                    If pcs = 1 Then
+                        Sheets("标签").PageSetup.PrintArea = "$A$2:$G$9" '设置标签页的打印区域
+                        
+                    ElseIf pcs = 2 Then
+                    Sheets("标签").PageSetup.PrintArea = "$A$2:$G$18" '设置标签页的打印区域
+                    
+                    Else
+                    Sheets("标签").PageSetup.PrintArea = "$A$2:$G$29" '设置标签页的打印区域
+                    '打印多个标签
+                        If pcs > 3 Then
+                        copys = CInt(pcs / 3) - 1
+                        ThisWorkbook.Sheets("标签").PrintOut copies:=copys, ActivePrinter:=Printer
+                        End If
+                    End If
+                    '打印标签
+                    ThisWorkbook.Sheets("标签").PrintOut copies:=1, ActivePrinter:=Printer
+                End If
+            End If
+            
+            Sheets("invoice").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                    FapiaoPath & "报关资料" & "_" & tracing & "_形式发票.pdf"
+                   
+            Sheets("报关委托书").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                    FapiaoPath & "报关资料" & "_" & tracing & "_报关委托书.pdf"
+                    
+            Sheets("报关单").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                    FapiaoPath & "报关资料" & "_" & tracing & "_报关单.pdf"
+                    
+            Sheets("申报要素").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                    FapiaoPath & "报关资料" & "_" & tracing & "_申报要素.pdf"
+    
+                Sheets("PL").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                    FapiaoPath & "报关资料" & "_" & tracing & "_PL.pdf"
+                    
+
+        Else
+         '如果是空运或者海运，则保存pdf
+         'MsgBox ("express:" & express)
+                
+                Sheets("PL(2)").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                FapiaoPath & express & "_" & Y1 & "_PL.pdf"  '如果是空运，输出的PL名称
+        
+        ThisWorkbook.Sheets(Array("invoice", "PL", "报关委托书", "报关单", "申报要素", "情况说明fedex", "销售合同")).Select
+
+             ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                 FapiaoPath & "上海盛傲报关资料" & "_" & Y1 & name & "_" & NW & "KG.pdf", Quality:=xlQualityStandard, IncludeDocProperties:=True, _
+     IgnorePrintAreas:=False, OpenAfterPublish:=True
+        
+        End If
+        
+        
+
+        
+    ' 若是退税货物，需要输出销售合同
+    If Tax = "要退税" Then
+            If company = "上海盛傲化学有限公司" Then
+                
+                'If Model = "一般贸易" Then
+                '建立一个文件夹，以单号命名
+                On Error Resume Next
+                If tracing = 0 Or "0" Or "" Then
+                folder_name = order_id & "_" & express & "_" & name & "_" & NW & " KG"
+                Else
+                
+                folder_name = order_id & "_" & tracing & "_" & name & "_" & NW & " KG"
+                End If
+                
+                folder_path = FatherPath & "退税\" & folder_name
+                
+                If Dir(folder_path, vbDirectory) = "" Then
+  
+                VBA.MkDir (folder_path) ' 将发票和合同保存在刚建立的文件夹中
+                
+                End If
+                
+                ThisWorkbook.Sheets("销售合同").Select
+           
+                ThisWorkbook.Sheets("销售合同").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+    folder_path & "\" & Y1 & "_contract.pdf", Quality:=xlQualityStandard, IncludeDocProperties:=True, _
+    IgnorePrintAreas:=False, OpenAfterPublish:=True   '输出退税用的contract文件
+                
+                
+                ThisWorkbook.Sheets("invoice").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                folder_path & "\" & Y1 & "_invoice.pdf"  '输出退税用的invoce文件
+            
+                ThisWorkbook.Sheets("PL").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                folder_path & "\" & Y1 & "_PL.pdf"  '输出退税用的invoce文件
+
+            End If
+    
+    
+    End If
+    
+    '输出发票供原产地证使用
+    'ThisWorkbook.Sheets("报关单").Range("U16") = "FOB"  '设置交易方式为FOB
+    'ThisWorkbook.Sheets("invoice").Select
+    'ThisWorkbook.Sheets("invoice").ExportAsFixedFormat Type:=xlTypePDF, Filename:= _
+                'FapiaoPath & express & "_" & tracing & "_" & Y1 & "_发票.pdf"
+    
+    
+        
+End If
+
+
+End Sub
