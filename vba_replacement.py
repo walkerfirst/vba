@@ -6,7 +6,7 @@ from tkinter import messagebox
 from datetime import datetime
 
 # 配置全局变量
-FATHER_PATH = File_PATH       # 父路径
+FATHER_PATH = File_PATH  # 父路径
 FAPIAO_PATH = File_PATH + '\发票'  # 发票保存路径
 PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
 
@@ -124,13 +124,10 @@ class EXCELProcessor:
                      f"总净重：{nw}\n总毛重：{gw}"
         
         confirm_window = create_window()
-
         # 显示确认对话框
         result = messagebox.askyesno("确认", confirm_msg, parent=confirm_window)
-        
         # 清理窗口
         confirm_window.destroy()
-        
         if not result:
             print("用户取消运行脚本")
             return
@@ -152,11 +149,9 @@ class EXCELProcessor:
                 self.print_labels(pcs) # 设置并打印标签
             
             # 保存报关用单据
-            self.generate_pdf("invoice", os.path.join(FAPIAO_PATH, f"{file_name2}_形式发票.pdf"))
-            self.generate_pdf("PL", os.path.join(FAPIAO_PATH, f"{file_name2}_箱单.pdf"))
-            self.generate_pdf("报关委托书", os.path.join(FAPIAO_PATH, f"{file_name2}_委托书.pdf"))
-            self.generate_pdf("报关单", os.path.join(FAPIAO_PATH, f"{file_name2}_报关单.pdf"))
-            self.generate_pdf("申报要素", os.path.join(FAPIAO_PATH, f"{file_name2}_申报要素.pdf"))
+            file_list = ["invoice", "PL", "报关委托书", "报关单", "申报要素"]
+            for _file in file_list:
+                self.generate_pdf(_file, os.path.join(FAPIAO_PATH, f"{file_name2}_{_file}.pdf"))
             
         # 空运或海运情况
         elif express.lower() in ["by sea", "by air"]:
@@ -188,39 +183,31 @@ class EXCELProcessor:
         self.generate_pdf("CI", 
                        os.path.join(FAPIAO_PATH, f"{file_name}_CI.pdf"))
         
-        if tax == "要退税" and  model == "一般贸易":
-            self.process_tax_refund(company, file_name, nw)
-
-    
-    def process_tax_refund(self, company, file_name, nw):
         """处理退税"""
-        if company == "上海盛傲化学有限公司":
-            # 获取订单ID
-            order_id = self.wb.Sheets("data").Range("S2").Value
-            if order_id:
-                order_id = int(order_id)
+        if tax == "要退税" and  model == "一般贸易":
+            if company == "上海盛傲化学有限公司":
+                # 获取订单ID
+                order_id = self.wb.Sheets("data").Range("S2").Value
+                if order_id:
+                    order_id = int(order_id)
+                else:
+                    order_id = "未指定"
+                # 获取当年年份
+                year = datetime.now().year
+                if nw > 1:
+                    nw = int(nw)
+                # 创建文件夹
+                folder_name = f"{order_id}_{name}_{nw} KG_y{year}"
+                folder_path = os.path.join(FATHER_PATH, "退税", folder_name)
+                os.makedirs(folder_path, exist_ok=True)
+                # 导出多个PDF文件
+                tax_file_list = ["invoice", "PL", "销售合同"]
+                for tax_file in tax_file_list:
+                    self.generate_pdf(tax_file, os.path.join(folder_path, f"{file_name}_{tax_file}.pdf"))
             else:
-                order_id = "未指定"
-            
-            # 获取申报名称
-            name = self.get_cell_value("C15")
-            # 获取当年年份
-            year = datetime.now().year
-            # 创建文件夹
-            folder_name = f"{order_id}_{name}_{nw}KG_y{year}"
-            folder_path = os.path.join(FATHER_PATH, "退税", folder_name)
-            os.makedirs(folder_path, exist_ok=True)
-            
-            # 导出多个PDF文件
-            self.generate_pdf("销售合同",
-                           os.path.join(folder_path, f"{file_name}_contract.pdf"))
-            
-            self.generate_pdf("invoice",
-                           os.path.join(folder_path, f"{file_name}_invoice.pdf"))
-            
-            self.generate_pdf("PL",
-                           os.path.join(folder_path, f"{file_name}_PL.pdf"))
-            
+                error_window = create_window()
+                messagebox.showerror("错误", "退税公司 不匹配", parent=error_window)
+    
     def print_labels(self, pcs):
         """打印标签"""
         sheet = self.wb.Sheets("标签")
