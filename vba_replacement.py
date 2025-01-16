@@ -60,11 +60,17 @@ class EXCELProcessor:
     def generate_multiple_pdf(self, sheets_to_export, output_path):
         """生成多个PDF文件并合并"""
         try:
-            # 取消所有选择
+            # 确保所有工作表取消选择
             self.excel.ActiveWindow.SelectedSheets.Select(False)
+            
+            # 激活第一个工作表
+            first_sheet = self.wb.Sheets(sheets_to_export[0])
+            first_sheet.Activate()
             
             # 选择多个工作表
             sheets = [self.wb.Sheets(sheet) for sheet in sheets_to_export]
+            
+            # 逐个选择目标工作表
             for sheet in sheets:
                 sheet.Select(False)  # Add to selection without unselecting others
                 
@@ -84,7 +90,7 @@ class EXCELProcessor:
                 IgnorePrintAreas=False,
                 OpenAfterPublish=True
             )
-            print(f"成功导出组合PDF: {output_path}")
+            # print(f"成功导出组合PDF: {output_path}")
             
             # 取消选择
             self.excel.ActiveWindow.SelectedSheets.Select(False)
@@ -162,11 +168,13 @@ class EXCELProcessor:
             
             # 导出组合PDF
             sheets_to_export = ["invoice", "PL", "报关委托书", "报关单", 
-                              "申报要素", "情况说明fedex", "销售合同"]
+                              "申报要素", "销售合同","情况说明fedex"]
             output_path = os.path.join(FAPIAO_PATH, 
                                      f"上海盛傲报关资料_{invoice_no}_{name}_{nw}KG.pdf")
             # 生成报关用PDF
             self.generate_multiple_pdf(sheets_to_export, output_path)
+            # 打开生成的PDF文件
+            os.startfile(output_path)
         
         # 其他情况
         else:
