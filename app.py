@@ -1,6 +1,5 @@
 # pip install pywin32
 import win32com.client
-# 注意这里选择从
 from config import shipment_file
 from window import create_window
 from db import read_db,conn
@@ -14,6 +13,7 @@ from tkinter import Tk, StringVar, OptionMenu, Button, ttk
 excel = win32com.client.Dispatch("Excel.Application")
 excel.Visible = False  # 可以设置为 True 调试
 excel.DisplayAlerts = False # 禁用警告
+
 def run():
     if not os.path.exists(shipment_file):
         msg_window = create_window()
@@ -25,11 +25,10 @@ def run():
     sql = 'select * from shipView where id=1'
     ship_dict = read_db(sql, conn)[0]
     if ship_dict['model'] == '发货':
-        # 指定执行VBA文件和 function
+        # 数据处理并执行vba程序
         process_data(data=ship_dict, wb=wb)
 
 def process_data(data, wb):
-
     try:
         # 定义工作表
         sheet = wb.Sheets('data')
@@ -101,7 +100,7 @@ def process_data(data, wb):
         confirm_btn.pack(pady=15)
         root.mainloop()
 
-        # 数据处理
+        # 数据预处理
         if data['tax'] == 1.0:
             tax = '要退税'
             data['trade'] = "一般贸易"

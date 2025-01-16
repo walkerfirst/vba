@@ -146,8 +146,8 @@ class EXCELProcessor:
                 self.print_labels(pcs) # 设置并打印标签
             
             # 保存报关用单据
-            self.generate_pdf("invoice", os.path.join(FAPIAO_PATH, f"{file_name2}_invoice.pdf"))
-            self.generate_pdf("PL", os.path.join(FAPIAO_PATH, f"{file_name2}_PL.pdf"))
+            self.generate_pdf("invoice", os.path.join(FAPIAO_PATH, f"{file_name2}_形式发票.pdf"))
+            self.generate_pdf("PL", os.path.join(FAPIAO_PATH, f"{file_name2}_箱单.pdf"))
             self.generate_pdf("报关委托书", os.path.join(FAPIAO_PATH, f"{file_name2}_委托书.pdf"))
             self.generate_pdf("报关单", os.path.join(FAPIAO_PATH, f"{file_name2}_报关单.pdf"))
             self.generate_pdf("申报要素", os.path.join(FAPIAO_PATH, f"{file_name2}_申报要素.pdf"))
@@ -178,7 +178,7 @@ class EXCELProcessor:
         
         # 保存商业发票
         self.generate_pdf("CI", 
-                       os.path.join(FAPIAO_PATH, f"{file_name}_commercial invoice.pdf"))
+                       os.path.join(FAPIAO_PATH, f"{file_name}_CI.pdf"))
         
         if tax == "要退税" and  model == "一般贸易":
             self.process_tax_refund(company, file_name, nw)
