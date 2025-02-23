@@ -105,10 +105,10 @@ class EXCELProcessor:
         express = self.get_cell_value("C11") # 运输商
         model = self.get_cell_value("I11") # 贸易方式
         tax = self.get_cell_value("E14") # 退税
-        tracing = self.get_cell_value("C12") # 单号
-        if tracing == 0.0:
+        tracing = int(self.get_cell_value("C12")) # 单号
+        if tracing == 0:
             tracing = ""
-            # print(tracing)
+        tracing = str(tracing)
         name = self.get_cell_value("C15") # 申报名称
         pcs = int(self.get_cell_value("L11")) # 包裹数量
         nw = self.invoice_sheet.Range("G29").Value # 总净重
@@ -145,9 +145,9 @@ class EXCELProcessor:
             dialog_window.destroy()
             
             if print_confirm:
-                self.print_sheet("情况说明", copies=2) # 打印情况说明
                 self.print_labels(pcs) # 设置并打印标签
-            
+                self.print_sheet("情况说明", copies=2) # 打印情况说明
+                
             # 保存报关用单据
             file_list = ["invoice", "PL", "报关委托书", "报关单", "申报要素"]
             for _file in file_list:
