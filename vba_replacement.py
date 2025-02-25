@@ -105,7 +105,7 @@ class EXCELProcessor:
         express = self.get_cell_value("C11") # 运输商
         model = self.get_cell_value("I11") # 贸易方式
         tax = self.get_cell_value("E14") # 退税
-        tracing = int(self.get_cell_value("C12")) # 单号
+        tracing = int(self.get_cell_value("C12")) # 单号取整数,否则有小数点
         if tracing == 0:
             tracing = ""
         tracing = str(tracing)
