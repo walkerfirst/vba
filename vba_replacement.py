@@ -137,17 +137,19 @@ class EXCELProcessor:
             file_name2 = f"上海盛傲_{tracing}" # 报关用单据的文件名
             # 创建隐藏窗口用于对话框
             dialog_window = create_window()
-            
+
+            copies = self.set_labels(pcs)
             # 显示打印确认对话框
-            print_confirm = messagebox.askyesno("确认", "是否打印DHL单据？", parent=dialog_window)
+            label_print_confirm = messagebox.askyesno("确认", f"是否打印DHL标签,共{copies}份？", parent=dialog_window)
             
+            if label_print_confirm:
+                self.print_sheet("标签", copies=copies) # 设置并打印标签
+            file_print_confirm = messagebox.askyesno("确认", "是否打印DHL情况说明？", parent=dialog_window)
+            if file_print_confirm:
+                self.print_sheet("情况说明", copies=2) # 打印情况说明
+
             # 销毁隐藏窗口
             dialog_window.destroy()
-            
-            if print_confirm:
-                self.print_labels(pcs) # 设置并打印标签
-                self.print_sheet("情况说明", copies=2) # 打印情况说明
-                
             # 保存报关用单据
             file_list = ["invoice", "PL", "报关委托书", "报关单", "申报要素"]
             for _file in file_list:
@@ -208,26 +210,26 @@ class EXCELProcessor:
                 error_window = create_window()
                 messagebox.showerror("错误", "退税公司 不匹配", parent=error_window)
     
-    def print_labels(self, pcs):
+    def set_labels(self, pcs):
         """打印标签"""
         sheet = self.wb.Sheets("标签")
         # 根据包裹数量设置打印区域
-        try:
-            pcs = int(pcs)  # 确保pcs为整数
-            if pcs == 1:
-                sheet.PageSetup.PrintArea = "$A$2:$F$9"
-                self.print_sheet("标签")
-            elif pcs == 2:
-                # 设置手动设置开关为No
-                # sheet.Cells(6, 5).Value = "NO"
-                sheet.PageSetup.PrintArea = "$A$2:$F$18"
-                self.print_sheet("标签")
+        pcs = int(pcs)  # 确保pcs为整数
+        if pcs == 1:
+            sheet.PageSetup.PrintArea = "$A$2:$F$9"
+        elif pcs == 2:
+            # 设置手动设置开关为No
+            # sheet.Cells(6, 5).Value = "NO"
+            sheet.PageSetup.PrintArea = "$A$2:$F$18"
+        else:
+            N = pcs // 3
+            if isinstance(N,int):
+                copies = N
             else:
-                copies = (pcs // 3) + 1
-                sheet.PageSetup.PrintArea = "$A$2:$F$29"
-                self.print_sheet("标签", copies=copies)
-        except Exception as e:
-            print(f"打印标签时出错: {str(e)}")
+                copies = N+1
+            sheet.PageSetup.PrintArea = "$A$2:$F$29"
+        return copies
+                
 
     def print_sheet(self, sheet_name, copies=1):
         try:
