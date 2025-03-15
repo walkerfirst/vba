@@ -215,6 +215,7 @@ class EXCELProcessor:
         sheet = self.wb.Sheets("标签")
         # 根据包裹数量设置打印区域
         pcs = int(pcs)  # 确保pcs为整数
+        copies = 1
         if pcs == 1:
             sheet.PageSetup.PrintArea = "$A$2:$F$9"
         elif pcs == 2:
