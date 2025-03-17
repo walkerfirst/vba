@@ -23,6 +23,43 @@ class EXCELProcessor:
         """获取单元格值"""
         return self.sheet1.Range(cell_ref).Value
 
+    def set_textbox_content(self):
+        """设置文本框内容"""
+        try:
+            # 读取 sheet1 的 C9 和 D9 单元格内容
+            chinese = self.sheet1.Range("C9").Value
+            english = self.sheet1.Range("D9").Value
+
+            # 目标工作表列表
+            sheets = {
+                "PL": "公司名",
+                "invoice": "公司名",
+                "申报要素": "公司名",
+                "销售合同": "公司名",
+                "情况说明fedex": "公司名"
+            }
+
+            for sheet_name, shape_name in sheets.items():
+                try:
+                    sheet = self.wb.Sheets(sheet_name)
+                    shape = sheet.Shapes(shape_name)
+                    text_range = shape.TextFrame2.TextRange
+                    if sheet_name == "销售合同":
+                        text_range.Text = f"Supplier：\n{chinese}\n{english}"
+                    elif sheet_name == "情况说明fedex":
+                        text_range.Text = chinese
+                    else:
+                        text_range.Text = f"{chinese}\n\n{english}"
+                except Exception as e:
+                    print(f"Error setting text in {sheet_name}: {e}")
+
+            # 保存 Excel
+            self.wb.Save()
+            print("文本框内容更新成功！")
+
+        except Exception as e:
+            print(f"更新文本框失败: {e}")
+
     def generate_pdf(self, sheet_name, file_path):
         """使用Excel内置功能生成PDF"""
         try:
@@ -131,6 +168,11 @@ class EXCELProcessor:
         if not result:
             print("用户取消运行脚本")
             return
+        
+        print("开始处理 Excel 数据...")
+        self.set_textbox_content()  # 在处理流程中调用
+        print("处理完成！")
+
         # 发货为快递的情况
         if express.lower() == "dhl":
             file_name= f"{express}_{tracing}_{invoice_no}" # 给客户单据的文件名
