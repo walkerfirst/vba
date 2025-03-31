@@ -1,3 +1,7 @@
+"""
+Python脚本替代VBA脚本
+"""
+
 import os
 import win32com.client,win32print
 from config import File_PATH
@@ -15,50 +19,45 @@ class EXCELProcessor:
         self.wb = wb
         self.excel = excel
         self.sheet1 = self.wb.Sheets("sheet1")
-        self.invoice_sheet = self.wb.Sheets("invoice")
         self.pl_sheet = self.wb.Sheets("PL")
-        self.sm_sheet = self.wb.Sheets("情况说明")
+        self.lable = self.wb.Sheets("标签")
         
     def get_cell_value(self, cell_ref):
         """获取单元格值"""
         return self.sheet1.Range(cell_ref).Value
 
-    def set_textbox_content(self):
+    def set_textbox_content(self, chinese, english):
         """设置文本框内容"""
-        try:
-            # 读取 sheet1 的 C9 和 D9 单元格内容
-            chinese = self.sheet1.Range("C9").Value
-            english = self.sheet1.Range("D9").Value
+        # 目标工作表列表
+        sheets = {
+            "PL": "公司名",
+            "invoice": "公司名",
+            "申报要素": "公司名",
+            "销售合同": "公司名",
+            "情况说明fedex": "公司名"
+        }
 
-            # 目标工作表列表
-            sheets = {
-                "PL": "公司名",
-                "invoice": "公司名",
-                "申报要素": "公司名",
-                "销售合同": "公司名",
-                "情况说明fedex": "公司名"
-            }
+        for sheet_name, shape_name in sheets.items():
+            msg_window = create_window()
+            try:
+                sheet = self.wb.Sheets(sheet_name)
+                shape = sheet.Shapes(shape_name)
+                text_range = shape.TextFrame2.TextRange
+                if sheet_name == "销售合同":
+                    text_range.Text = f"Supplier：\n{chinese}\n{english}"
+                elif sheet_name == "情况说明fedex":
+                    text_range.Text = chinese
+                else:
+                    text_range.Text = f"{chinese}\n\n{english}"
 
-            for sheet_name, shape_name in sheets.items():
-                try:
-                    sheet = self.wb.Sheets(sheet_name)
-                    shape = sheet.Shapes(shape_name)
-                    text_range = shape.TextFrame2.TextRange
-                    if sheet_name == "销售合同":
-                        text_range.Text = f"Supplier：\n{chinese}\n{english}"
-                    elif sheet_name == "情况说明fedex":
-                        text_range.Text = chinese
-                    else:
-                        text_range.Text = f"{chinese}\n\n{english}"
-                except Exception as e:
-                    print(f"Error setting text in {sheet_name}: {e}")
+                # messagebox.showinfo("提示", f"成功设置文本框内容: {sheet_name}", parent=msg_window)
+            except Exception as e:
+                Errormsg = f"Error setting text in {sheet_name}: {e}"
+                # 显示确认对话框
+                messagebox.showerror("错误", Errormsg, parent=msg_window) # 显示错误信息对话框
 
-            # 保存 Excel
-            self.wb.Save()
-            print("文本框内容更新成功！")
-
-        except Exception as e:
-            print(f"更新文本框失败: {e}")
+        # 保存 Excel
+        self.wb.Save()
 
     def generate_pdf(self, sheet_name, file_path):
         """使用Excel内置功能生成PDF"""
@@ -86,13 +85,12 @@ class EXCELProcessor:
             
             # 取消选择
             self.excel.ActiveWindow.SelectedSheets.Select(False)
-            return True
+
         except Exception as e:
             print(f"生成PDF失败: {str(e)}")
             print(f"详细错误信息: {e.__class__.__name__}")
             if hasattr(e, 'excepinfo'):
                 print(f"Excel错误代码: {e.excepinfo[5]}")
-            return False
 
     def generate_multiple_pdf(self, sheets_to_export, output_path):
         """生成多个PDF文件并合并"""
@@ -136,9 +134,9 @@ class EXCELProcessor:
 
     def process(self):
         """主处理逻辑"""
-        
         # 获取数据
         company = self.get_cell_value("C9") # 发件抬头
+        english = self.get_cell_value("D9") # 发件抬头英文
         express = self.get_cell_value("C11") # 运输商
         model = self.get_cell_value("I11") # 贸易方式
         tax = self.get_cell_value("E14") # 退税
@@ -148,14 +146,15 @@ class EXCELProcessor:
         tracing = str(tracing)
         name = self.get_cell_value("C15") # 申报名称
         pcs = int(self.get_cell_value("L11")) # 包裹数量
-        nw = self.invoice_sheet.Range("G29").Value # 总净重
+        nw = self.pl_sheet.Range("J29").Value # 总净重
         gw = self.pl_sheet.Range("K29").Value  # 总毛重
-        invoice_no = self.invoice_sheet.Range("E5").Value # 发票号
+        invoice_no = self.get_cell_value("L12") # 发票号
         package = self.get_cell_value("C20")  # 包装类型
         ask_value = self.get_cell_value("L9")  # 总报关价值
+        consingee = self.get_cell_value("D2")  # 收件人
         
         # 构建确认信息
-        confirm_msg = f"发货信息确认:\n\n{tax}\n抬头：{company}\n贸易方式：{model}\n\n" \
+        confirm_msg = f"发货信息确认:\n\n{tax}\n抬头：{company}\n收货人: {consingee}\n贸易方式：{model}\n\n" \
                      f"运输商：{express}\n单号：{tracing}\n申报名称：{name}\n\n" \
                      f"包装：{package}\n总价值：{ask_value}\n总件数: {pcs}\n" \
                      f"总净重：{nw}\n总毛重：{gw}"
@@ -169,9 +168,8 @@ class EXCELProcessor:
             print("用户取消运行脚本")
             return
         
-        print("开始处理 Excel 数据...")
-        self.set_textbox_content()  # 在处理流程中调用
-        print("处理完成！")
+        # 更新文本框内容
+        self.set_textbox_content(chinese=company, english=english)  
 
         # 发货为快递的情况
         if express.lower() == "dhl":
@@ -179,13 +177,22 @@ class EXCELProcessor:
             file_name2 = f"上海盛傲_{tracing}" # 报关用单据的文件名
             # 创建隐藏窗口用于对话框
             dialog_window = create_window()
-
             copies = self.set_labels(pcs)
             # 显示打印确认对话框
             label_print_confirm = messagebox.askyesno("确认", f"是否打印DHL标签,共{copies}份？", parent=dialog_window)
-            
             if label_print_confirm:
-                self.print_sheet("标签", copies=copies) # 设置并打印标签
+                unit_net2 = self.wb.Sheets("data").Range("k5").Value # 单件净重2 (第二种包装)
+                if unit_net2:
+                    if copies > 1: # 多页并且两种标签时，先打印第一个标签, 再打印第二个标签
+                        self.lable.Cells(6, 8).Value = "No" # 设置手动设置开关为NO(不显示第二种标签)
+                        self.print_sheet("标签", copies=copies-1) # 设置并打印标签
+                        self.lable.Cells(6, 8).Value = "YES"
+                        self.print_sheet("标签", copies=1)
+                    else:
+                        self.print_sheet("标签", copies=copies)
+                else:
+                    self.print_sheet("标签", copies=copies)
+
             file_print_confirm = messagebox.askyesno("确认", "是否打印DHL情况说明？", parent=dialog_window)
             if file_print_confirm:
                 self.print_sheet("情况说明", copies=2) # 打印情况说明
@@ -200,7 +207,6 @@ class EXCELProcessor:
         # 空运或海运情况
         elif express.lower() in ["by sea", "by air"]:
             file_name = f"{express}_{invoice_no}"
-            print(file_name)
             # 导出PL(2)工作表
             self.generate_pdf("PL(2)",
                            os.path.join(FAPIAO_PATH, f"{file_name}_PL.pdf"))
@@ -253,27 +259,24 @@ class EXCELProcessor:
                 messagebox.showerror("错误", "退税公司 不匹配", parent=error_window)
     
     def set_labels(self, pcs):
-        """打印标签"""
-        sheet = self.wb.Sheets("标签")
+        """设置标签,并返回打印份数"""
+        
         # 根据包裹数量设置打印区域
         pcs = int(pcs)  # 确保pcs为整数
         copies = 1
         if pcs == 1:
-            sheet.PageSetup.PrintArea = "$A$2:$F$9"
+            self.lable.PageSetup.PrintArea = "$A$2:$F$9"
         elif pcs == 2:
-            # 设置手动设置开关为No
-            # sheet.Cells(6, 5).Value = "NO"
-            sheet.PageSetup.PrintArea = "$A$2:$F$18"
+            self.lable.PageSetup.PrintArea = "$A$2:$F$18"
         else:
             N = pcs // 3
             if isinstance(N,int):
                 copies = N
             else:
                 copies = N+1
-            sheet.PageSetup.PrintArea = "$A$2:$F$29"
+            self.lable.PageSetup.PrintArea = "$A$2:$F$29"
         return copies
                 
-
     def print_sheet(self, sheet_name, copies=1):
         try:
             sheet = self.wb.Sheets(sheet_name)

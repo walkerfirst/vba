@@ -1,12 +1,31 @@
-import sqlite3
-_local = False
+"""基本配置文件"""
+import sqlite3,os
+
+_local = True # 本地模式开关
+
 if _local:
-    shipment_file = r"C:\\Users\\Administrator\\工作本地\\发货\\shipment.xlsm"
-    chemical_file = 'C:\\Users\Administrator\\project\\pharmasiAdmin\\instance\\chemical.db'
-    File_PATH = r"C:\\Users\\Administrator\\工作本地"
+    # 本地路径配置
+    base_dir = os.path.normpath(r"C:\Users\Administrator")  # 使用原始字符串确保路径正确
+    chem_base = os.path.join(base_dir, "project") # 化学品数据库目录
 else:
-    chemical_file = 'X:\\pharmasiAdmin\\instance\\chemical.db'
-    shipment_file = r"Z:\\工作\\发货\\shipment.xlsm"
-    File_PATH = r"Z:\工作"
+    # 远程路径配置
+    base_dir = "Z:" 
+    chem_base = "X:"
+
+# 工作目录(生成的pdf文件 父目录)
+File_PATH = os.path.join(base_dir, "工作")
+
+# 发货excel文件
+shipment_file = os.path.join(File_PATH, "发货", "shipment.xlsm")
+
+# cof导出文件
+cof_file = os.path.join(File_PATH, "发货", "cof.xlsx")
+
+# 数据库文件
+chemical_file = os.path.join(chem_base, "pharmasiAdmin", "instance", "chemical.db")
+
+# DHL账单导入路径
+csv_path = os.path.join(File_PATH, "发货", "快递账单")
+
 conn = sqlite3.connect(chemical_file)
 

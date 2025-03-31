@@ -1,5 +1,4 @@
 import win32com.client
-from openpyxl import load_workbook
 
 def set_textbox_content(file_path):
     # 打开 Excel 应用
