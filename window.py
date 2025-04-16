@@ -1,3 +1,4 @@
+""" 创建一个隐藏的窗口，用于创建对话框 """
 import tkinter as tk
 
 def create_window():

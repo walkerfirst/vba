@@ -1,7 +1,7 @@
 """基本配置文件"""
 import sqlite3,os
 
-_local = True # 本地模式开关
+_local = False # 本地模式开关
 
 if _local:
     # 本地路径配置

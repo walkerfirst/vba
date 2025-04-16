@@ -67,12 +67,12 @@ def frame_layout(data):
     style.configure('TButton', font=('Microsoft YaHei', 10), padding=3)
     
     # 标题
-    label = ttk.Label(main_frame, text="发  货  系  统", style='Title.TLabel')
-    label.pack(pady=(0, 20))
+    label = ttk.Label(main_frame, text="订  单  发  货  系  统", style='Title.TLabel')
+    label.pack(pady=(10, 20)) # 上下间距
 
 # 1. 订单货物名称下拉菜单（占窗口80%宽度）
     order_frame = ttk.Frame(main_frame)
-    order_frame.pack(fill="x", pady=(0, 15))
+    order_frame.pack(fill="x", pady=(0, 20))
     
     # ttk.Label(shipping_frame, text="运输方式：").pack(side='left', padx=(0, 10))
     var_order = StringVar()
@@ -90,7 +90,7 @@ def frame_layout(data):
     
     package_frame = ttk.Frame(options_frame)
     package_frame.pack(side='left', fill="x", expand=True)  # 包裹种类扩展
-    ttk.Label(package_frame, text="包裹种类：").pack(anchor='w')
+    ttk.Label(package_frame, text="货物种类：").pack(anchor='w')
     var_package = StringVar()
     package_menu = ttk.Combobox(package_frame,
                               textvariable=var_package,
@@ -112,7 +112,6 @@ def frame_layout(data):
     weight_menu.current(0)
     weight_menu.pack()
 
-
     # 3. 按钮区域（优化布局）
     button_frame = ttk.Frame(main_frame)
     button_frame.pack(fill="x", pady=(20, 0))
@@ -128,7 +127,7 @@ def frame_layout(data):
                           text="产地证",
                           command=lambda: cof_action(root,order_options[var_order.get()]),  # 传递root
                           width=6) # 固定宽度6px
-    cof_btn.grid(row=0, column=0, padx=3) # 左右间距3px
+    cof_btn.grid(row=0, column=0, padx=3) # 设置为第一行,第一列,左右间距3px
 
     # 删除按钮
     delete_btn = ttk.Button(button_frame,
@@ -156,13 +155,12 @@ def frame_layout(data):
                                }
                            ),
                            width=8)
-    confirm_btn.grid(row=0, column=3, padx=3)
+    confirm_btn.grid(row=0, column=3, padx=3) 
     root.mainloop()
 
 def process_data(root,frame_data):
     try:
         root.destroy() # 关闭主窗口
-
         # 读取数据库中的发货信息
         order_id = frame_data['order_id']
         sql =f'select * from shipView where order_id = "{order_id}"'
@@ -260,7 +258,7 @@ def delete_action(root,order_id):
         messagebox.showinfo("提示", f"订单 {order_id} 已删除",parent=msg_window)
     else:
         messagebox.showerror("错误", "无订单",parent=msg_window)
-        
+
     # root.destroy()
 if __name__ == '__main__':
 

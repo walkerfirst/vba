@@ -29,10 +29,14 @@ def ImportDHLBill(root):
         # print(order_waybill_list)
         # 读取csv文件中的数据
         data = extract_columns_from_csv(csv_path)
+        print(data)
         i = 0
         j = 0
+        print(waybill_list)
         for item in data:
             # 如果数据库中没有记录,则添加
+            print(item['waybill'])
+
             if item['waybill'] not in waybill_list:
                 # 转换日期格式为 datetime
                 ship_date_str = item['ship_date'].replace("'", "''")
