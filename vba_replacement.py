@@ -181,7 +181,7 @@ class EXCELProcessor:
             # 显示打印确认对话框
             label_print_confirm = messagebox.askyesno("确认", f"是否打印DHL标签,共{copies}份？", parent=dialog_window)
             if label_print_confirm:
-                unit_net2 = self.wb.Sheets("data").Range("k5").Value # 单件净重2 (第二种包装)
+                unit_net2 = self.wb.Sheets("data").Range("k2").Value # 单件净重2 (第二种包装)
                 if unit_net2:
                     if copies > 1: # 多页并且两种标签时，先打印第一个标签, 再打印第二个标签
                         self.lable.Cells(6, 8).Value = "No" # 设置手动设置开关为NO(不显示第二种标签)
@@ -189,7 +189,8 @@ class EXCELProcessor:
                         self.lable.Cells(6, 8).Value = "YES"
                         self.print_sheet("标签", copies=1)
                     else:
-                        self.print_sheet("标签", copies=copies)
+                        self.lable.Cells(6, 8).Value = "YES"
+                        self.print_sheet("标签", copies=1)
                 else:
                     self.print_sheet("标签", copies=copies)
 
@@ -269,11 +270,12 @@ class EXCELProcessor:
         elif pcs == 2:
             self.lable.PageSetup.PrintArea = "$A$2:$F$18"
         else:
-            N = pcs // 3
+            N = pcs / 3
+            print(f"包裹数量: {pcs}, 计算出的N值: {N}")
             if isinstance(N,int):
                 copies = N
             else:
-                copies = N+1
+                copies = int(N)+1
             self.lable.PageSetup.PrintArea = "$A$2:$F$29"
         return copies
                 

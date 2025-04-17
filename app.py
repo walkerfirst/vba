@@ -6,6 +6,7 @@
 4. 执行VBA程序
 """
 # pip install pywin32
+import sys
 import win32com.client
 from config import shipment_file
 from window import create_window
@@ -50,7 +51,16 @@ def frame_layout(data):
     root.title("初始设置")
     root.geometry("400x350")
     root.resizable(False, False)
-    
+
+    # 添加窗口关闭协议处理
+    def on_closing():
+        # print("窗口关闭事件触发！")  # 检查是否执行
+        root.destroy()  # 销毁窗口
+        sys.exit(0)  # 退出程序
+        
+    # 绑定关闭事件
+    root.protocol("WM_DELETE_WINDOW", on_closing) 
+
     # 运输方式映射字典
     order_options = data
     frame_data = {}
@@ -242,10 +252,10 @@ def cof_action(root,order_id):
     data['hs'] = hs
     from export_cof import update_cof_excel
     update_cof_excel(data)
-    root.destroy()
+    # root.destroy()
     # 弹出窗口提示
     msg_window = create_window()
-    messagebox.showinfo("提示", f"{data['chinese']} ({data['qty']} KG) 产地证已导出",parent=msg_window)
+    messagebox.showinfo("产地证导出", f"订单: {order_id}  {data['chinese']} ({data['qty']} KG) \n \n导出成功",parent=msg_window)
 
 def delete_action(root,order_id):
     """删除ship表中的记录操作"""

@@ -29,15 +29,13 @@ def ImportDHLBill(root):
         # print(order_waybill_list)
         # 读取csv文件中的数据
         data = extract_columns_from_csv(csv_path)
-        print(data)
-        i = 0
-        j = 0
-        print(waybill_list)
+        i = 0 # 添加运费记录 计数
+        j = 0 # 更新的运费 计数
+        amount = 0 # 运费总和
         for item in data:
             # 如果数据库中没有记录,则添加
-            print(item['waybill'])
-
             if item['waybill'] not in waybill_list:
+                # print(f"添加运单号: {item['waybill']}")
                 # 转换日期格式为 datetime
                 ship_date_str = item['ship_date'].replace("'", "''")
                 try:
@@ -57,6 +55,8 @@ def ImportDHLBill(root):
                         '{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}')"""
                 execute_db(save_sql)
                 i +=1
+                amount += item['amount']
+
             # 如果订单中有未添加的运费,则自动添加
             if item['waybill'] in order_waybill_list:
                 update_waybill = item['waybill']
@@ -67,7 +67,13 @@ def ImportDHLBill(root):
 
         # print(f"共保存 {i} ,{j} 条数据")
         msg_window = create_window()
-        messagebox.showinfo("提示", f"共保存  {i}  条 记录 \n \n跟单记录中更新了  {j}  条运费", parent=msg_window)
+        messagebox.showinfo("提示", f"共保存  {i}  条 运费记录 \n \n跟单记录中更新了  {j}  条运费 \n \n 本次添加运费总计: {amount} 元", parent=msg_window)
         msg_window.destroy()
+
 if __name__ == '__main__':
-    ImportDHLBill()
+    from tkinter import Tk
+    root = Tk()
+    root.title("初始设置")
+    root.geometry("400x350")
+    root.resizable(False, False)
+    ImportDHLBill(root)
