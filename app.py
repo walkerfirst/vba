@@ -57,7 +57,7 @@ def frame_layout(data):
         # print("窗口关闭事件触发！")  # 检查是否执行
         root.destroy()  # 销毁窗口
         sys.exit(0)  # 退出程序
-        
+
     # 绑定关闭事件
     root.protocol("WM_DELETE_WINDOW", on_closing) 
 
@@ -109,18 +109,18 @@ def frame_layout(data):
     package_menu.pack(fill="x", expand=True)  # 占满剩余空间
     package_menu.current(0)
 
-    # 手动重量（固定宽度）
-    weight_frame = ttk.Frame(options_frame)
-    weight_frame.pack(side='left', padx=(20, 0))  # 左边距20px
-    ttk.Label(weight_frame, text="手动重量：").pack(anchor='w')
+    # 客户选择（固定宽度）
+    customer_frame = ttk.Frame(options_frame)
+    customer_frame.pack(side='left', padx=(20, 0))  # 左边距20px
+    ttk.Label(customer_frame, text="客户选择：").pack(anchor='w')
     var_weight = StringVar()
-    weight_menu = ttk.Combobox(weight_frame,
+    customer_menu = ttk.Combobox(customer_frame,
                              textvariable=var_weight,
-                             values=["NO", "YES"],
+                             values=["HanChem Co., Ltd", "SIGMA-ALDRICH ISRAEL LTD"],
                              state="readonly",
-                             width=12)  # 固定宽度
-    weight_menu.current(0)
-    weight_menu.pack()
+                             width=25)  # 固定宽度
+    customer_menu.current(0)
+    customer_menu.pack()
 
     # 3. 按钮区域（优化布局）
     button_frame = ttk.Frame(main_frame)
@@ -161,7 +161,7 @@ def frame_layout(data):
                                {
                                    'order_id': order_options[var_order.get()],
                                    'type_qty': var_package.get(),
-                                   'manual': var_weight.get()
+                                   'customer': var_weight.get()
                                }
                            ),
                            width=8)
@@ -182,7 +182,7 @@ def process_data(root,frame_data):
         sheet1 = wb.Sheets('sheet1')
 
         sheet1.Cells(9,9).Value = frame_data['type_qty'] # 产品种类
-        wb.Sheets('标签').Cells(6, 8).Value = frame_data['manual'] # 手动输入开关
+        sheet1.Cells(2, 4).Value = frame_data['customer'] # 手动输入开关
 
         # 数据预处理
         if data['tax'] == 1.0:
