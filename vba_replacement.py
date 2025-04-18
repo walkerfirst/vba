@@ -4,15 +4,14 @@ Python脚本替代VBA脚本
 
 import os
 import win32com.client,win32print
-from config import File_PATH
+from config import FILE_PATH,FAPIAO_PATH,PRINTER_NAME
 from window import create_window
 from tkinter import messagebox
 from datetime import datetime
 
 # 配置全局变量
-FATHER_PATH = File_PATH  # 父路径
-FAPIAO_PATH = File_PATH + '\发票'  # 发票保存路径
-PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
+# FAPIAO_PATH = File_PATH + '\发票'  # 发票保存路径
+# PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
 
 class EXCELProcessor:
     def __init__(self,excel,wb):
@@ -249,7 +248,7 @@ class EXCELProcessor:
                     nw = int(nw)
                 # 创建文件夹
                 folder_name = f"{order_id}_{name}_{nw} KG_y{year}"
-                folder_path = os.path.join(FATHER_PATH, "退税", folder_name)
+                folder_path = os.path.join(FILE_PATH, "退税", folder_name)
                 os.makedirs(folder_path, exist_ok=True)
                 # 导出多个PDF文件
                 tax_file_list = ["invoice", "PL", "销售合同"]

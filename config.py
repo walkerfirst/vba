@@ -1,4 +1,4 @@
-"""基本配置文件"""
+"""基本配置文件, 配置全局变量"""
 import sqlite3,os
 
 _local = False # 本地模式开关
@@ -13,19 +13,22 @@ else:
     chem_base = "X:"
 
 # 工作目录(生成的pdf文件 父目录)
-File_PATH = os.path.join(base_dir, "工作")
+FILE_PATH = os.path.join(base_dir, "工作")
 
 # 发货excel文件
-shipment_file = os.path.join(File_PATH, "发货", "shipment.xlsm")
+shipment_file = os.path.join(FILE_PATH, "发货", "shipment.xlsm")
+FAPIAO_PATH = os.path.join(FILE_PATH, "发票")
 
-# cof导出文件
-cof_file = os.path.join(File_PATH, "发货", "cof.xlsx")
+# cof产地址模版导出文件
+cof_file = os.path.join(FAPIAO_PATH, "cof.xlsx")
 
 # 数据库文件
 chemical_file = os.path.join(chem_base, "pharmasiAdmin", "instance", "chemical.db")
 
 # DHL账单导入路径
-csv_path = os.path.join(File_PATH, "发货", "快递账单")
+csv_path = os.path.join(FILE_PATH, "发货", "快递账单")
 
 conn = sqlite3.connect(chemical_file)
+
+PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
 
