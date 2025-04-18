@@ -30,16 +30,7 @@ def run():
         messagebox.showerror("错误", f"文件 {shipment_file} 不存在",parent=msg_window)
         return
     
-    # 获取发货信息
-    sql = 'select order_id,chinese from shipView where model="发货"'
-    ship_dict = read_db(sql)
-    ship_data = {}
-    # 将字典列表重新调整一个新字段, 中文名(id) 为key, id 为value
-    if ship_dict:
-        for item in ship_dict:
-            ship_data[f"{item['chinese']}({item['order_id']})"] = item['order_id']
-    else:
-        ship_data = {'无订单': '1'}
+    ship_data = fetch_ship_data()
 
     # 数据处理并执行vba程序
     frame_layout(ship_data)
@@ -48,7 +39,7 @@ def frame_layout(data):
     """设置主窗口布局,并传递选择的数据"""
 
     root = Tk()
-    root.title("初始设置")
+    root.title("主窗口")
     root.geometry("400x350")
     root.resizable(False, False)
 
@@ -246,30 +237,49 @@ def cof_action(root,order_id):
     product = read_db(f"select hs from product where cas='{cas}'")[0]
     hs = product['hs']
     if not hs:
-        msg_window = create_window()
-        messagebox.showerror("错误", f"产品 {cas} 的HS编码不存在",parent=msg_window)
+        messagebox.showerror("错误", f"产品 {cas} 的HS编码不存在, 请检查数据库",parent=root)
         return
     data['hs'] = hs
     from export_cof import update_cof_excel
     update_cof_excel(data)
     # root.destroy()
     # 弹出窗口提示
-    msg_window = create_window()
-    messagebox.showinfo("产地证导出", f"订单: {order_id}  {data['chinese']} ({data['qty']} KG) \n \n导出成功",parent=msg_window)
+    messagebox.showinfo("产地证导出", f"订单: {order_id}  {data['chinese']} ({data['qty']} KG) \n \n导出成功",parent=root)
 
 def delete_action(root,order_id):
     """删除ship表中的记录操作"""
-    msg_window = create_window()
     if order_id != '1':
         order_id = order_id
         sql = f'delete from ship where order_id = "{order_id}"'
         execute_db(sql)
+        refresh_data(root)  # 删除后立即刷新
         # 弹出窗口提示
-        messagebox.showinfo("提示", f"订单 {order_id} 已删除",parent=msg_window)
+        messagebox.showinfo("提示", f"订单 {order_id} 已删除",parent=root)
     else:
-        messagebox.showerror("错误", "无订单",parent=msg_window)
+        messagebox.showerror("错误", "无订单",parent=root)
 
-    # root.destroy()
+def refresh_data(root):
+    """清空并重建窗口（接收数据参数）"""
+    # for widget in root.winfo_children():
+    #     widget.destroy()
+    root.destroy()  # 销毁当前窗口
+    new_data = fetch_ship_data()  # 获取最新数据
+    frame_layout(new_data)  # 使用传入的最新 data
+
+def fetch_ship_data():
+    """从数据库获取最新数据（示例）"""
+   # 获取发货信息
+    sql = 'select order_id,chinese from shipView where model="发货"'
+    ship_dict = read_db(sql)
+    ship_data = {}
+    # 将字典列表重新调整一个新字段, 中文名(id) 为key, id 为value
+    if ship_dict:
+        for item in ship_dict:
+            ship_data[f"{item['chinese']}({item['order_id']})"] = item['order_id']
+    else:
+        ship_data = {'无订单': '1'}
+    return ship_data
+
 if __name__ == '__main__':
 
     run()

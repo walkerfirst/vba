@@ -17,9 +17,10 @@ from window import create_window
 from config import csv_path
 
 def ImportDHLBill(root):
-    root.destroy() # 关闭主窗口
+    # root.destroy() # 关闭主窗口
     if not os.path.exists(csv_path):
-        print(f"错误: 路径 {csv_path} 不存在")
+        # print(f"错误: 路径 {csv_path} 不存在")
+        messagebox.showerror("错误: 路径 {csv_path} 不存在",parent=root)
     else:
         # 读取数据库中的运单号 list
         waybill_list = read_db_list('select waybill from shipping_record') 
@@ -65,10 +66,9 @@ def ImportDHLBill(root):
                 execute_db(update_sql)
                 j +=1
 
-        # print(f"共保存 {i} ,{j} 条数据")
-        msg_window = create_window()
-        messagebox.showinfo("提示", f"共保存  {i}  条 运费记录 \n \n跟单记录中更新了  {j}  条运费 \n \n 本次添加运费总计: {amount} 元", parent=msg_window)
-        msg_window.destroy()
+        # msg_window = create_window()
+        messagebox.showinfo("提示", f"共保存  {i}  条 运费记录 \n \n跟单记录中更新了  {j}  条运费 \n \n 本次添加运费总计: {amount} 元", parent=root)
+        # msg_window.destroy()
 
 if __name__ == '__main__':
     from tkinter import Tk
