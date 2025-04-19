@@ -1,7 +1,7 @@
 """基本配置文件, 配置全局变量"""
 import sqlite3,os
 
-_local = True # 本地模式开关
+_local = False # 本地模式开关
 
 if _local:
     # 本地路径配置
@@ -16,7 +16,7 @@ else:
 FILE_PATH = os.path.join(base_dir, "工作")
 
 # 发货excel文件
-shipment_file = os.path.join(FILE_PATH, "发货", "shipment.xlsm")
+shipment_file = os.path.join(r"C:\Users\Administrator\工作", "发货", "shipment.xlsm")
 FAPIAO_PATH = os.path.join(FILE_PATH, "发票")
 
 # cof产地址模版导出文件

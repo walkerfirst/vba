@@ -165,16 +165,16 @@ class EXCELProcessor:
         
         # 构建确认信息
         confirm_msg = f"{tax}\n{model}\n\n"\
-                    f"{company}\n{consingee}\n{tracing} ({express})\n\n"\
-                     f"{name}\n总价值：{ask_value}\n{pcs}  PCS\n\n"\
-                     f"包装：{package}\n" \
-                     f"总净重：{nw}\n总毛重：{gw}"
+                    f"{company}\n{consingee}\n{tracing}  {express}\n\n"\
+                     f"{name}\nUSD {ask_value}\n\n"\
+                     f"{pcs}  {package}\nNET：{nw}\nG.W.：{gw}"
         
         # 定义需要高亮的关键字及颜色
         highlight_keywords = {
-            "不退税": "red",
-            "DHL": "orange",
             "退税": "green",
+            "不退税": "red",
+            "DRUM": "orange",
+            "CARTON": "orange",
         }
 
         # 显示确认对话框

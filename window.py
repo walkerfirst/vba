@@ -92,7 +92,7 @@ def window_askyesno(parent, title, message, keywords=None):
             end = f"1.0+{match.end()}c"
             text.tag_add("number", start, end)
         # 设置高亮样式
-        text.tag_config("number", foreground="blue", font=("Microsoft YaHei", 10, "normal"))
+        text.tag_config("number", foreground="blue", font=("Arial", 12, "normal"))
     
     highlight_numbers()  # 执行数值高亮
 
