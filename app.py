@@ -17,6 +17,7 @@ import os
 from vba_replacement import EXCELProcessor
 from tkinter import Tk, StringVar, OptionMenu, Button, ttk
 from DHL_bill_process import ImportDHLBill
+from window import window_askyesno
 
 def run():
     if not os.path.exists(shipment_file):
@@ -250,17 +251,23 @@ def cof_action(root,order_id):
     """cof导出操作"""
     data = read_db(f'select * from shipView where order_id = "{order_id}"')[0]
     cas = data['cas']
+    invoice = data['invoice']
+    waybill = data['waybill']
+    express = data['express']
+    date = data['date'][:10]
+    pcs = data['pcs']
+    package = data['package']
     product = read_db(f"select hs from product where cas='{cas}'")[0]
-    hs = product['hs']
-    if not hs:
-        messagebox.showerror("错误", f"产品 {cas} 的HS编码不存在, 请检查数据库",parent=root)
+    hs = product['hs'].strip()
+    if not hs or len(hs) != 10:
+        messagebox.showerror("错误", f"产品 {data['chinese']} {cas} 的 HS编码 存在问题, 请检查数据库",parent=root)
         return
     data['hs'] = hs
     from export_cof import update_cof_excel
     update_cof_excel(data)
-    # root.destroy()
     # 弹出窗口提示
-    messagebox.showinfo("产地证导出", f"订单: {order_id}  {data['chinese']} ({data['qty']} KG) \n \n导出成功",parent=root)
+    window_askyesno(root,"产地证导出成功", f"订单: {order_id}\n{data['chinese']}\n{data['qty']} KG\n{pcs} {package}\n\n" \
+                    f"{invoice}\n{date} (发票日期)\n{waybill} by {express}",keywords={'DRUM': 'orange', 'CARTON': 'orange', 'BAG': 'green'})
 
 def delete_action(root,order_id):
     """删除ship表中的记录操作"""
@@ -269,7 +276,7 @@ def delete_action(root,order_id):
         sql = f'delete from ship where order_id = "{order_id}"'
         execute_db(sql)
         # 弹出窗口提示
-        messagebox.showinfo("提示", f"订单 {order_id} 已删除",parent=root)
+        window_askyesno(root,"提示", f"订单 {order_id} 已删除")
         refresh_data(root)  # 删除后立即刷新
     else:
         messagebox.showerror("错误", "无订单",parent=root)

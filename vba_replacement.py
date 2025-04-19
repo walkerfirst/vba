@@ -195,7 +195,7 @@ class EXCELProcessor:
             copies = self.set_labels(pcs) # 获取打印份数并设置标签打印区域
 
             # 显示打印确认对话框
-            label_print_confirm = window_askyesno(self.root,"确认", f"是否打印DHL标签, 共 {copies} 份？",keywords={'标签':"orange"})
+            label_print_confirm = window_askyesno(self.root,"打印确认", f"是否打印DHL标签, 共 {copies} 份？",keywords={'标签':"orange"})
             if label_print_confirm:
                 unit_net2 = self.wb.Sheets("data").Range("k2").Value # 单件净重2 (第二种包装)
                 if unit_net2:
@@ -210,7 +210,7 @@ class EXCELProcessor:
                 else:
                     self.print_sheet("标签", copies=copies)
 
-            file_print_confirm = window_askyesno(self.root,"确认", "是否 打印 DHL情况说明？",keywords={'情况说明':"orange"})
+            file_print_confirm = window_askyesno(self.root,"打印确认", "是否 打印 DHL情况说明？",keywords={'情况说明':"orange"})
             if file_print_confirm:
                 self.print_sheet("情况说明", copies=2) # 打印情况说明
 

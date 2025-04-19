@@ -10,10 +10,10 @@
 
 import os
 from csv_reader import extract_columns_from_csv
-from db import execute_db,read_db_list,read_db
+from db import execute_db,read_db_list
 from datetime import datetime
+from window import window_askyesno
 from tkinter import messagebox
-from window import create_window
 from config import csv_path
 
 def ImportDHLBill(root):
@@ -66,9 +66,7 @@ def ImportDHLBill(root):
                 execute_db(update_sql)
                 j +=1
 
-        # msg_window = create_window()
-        messagebox.showinfo("提示", f"共保存  {i}  条 运费记录 \n \n跟单记录中更新了  {j}  条运费 \n \n 本次添加运费总计: {amount} 元", parent=root)
-        # msg_window.destroy()
+        window_askyesno(root,"提示", f"共保存  {i}  条 运费记录 \n \n跟单记录中更新了  {j}  条运费 \n \n 本次添加运费总计: {amount} 元")
 
 if __name__ == '__main__':
     from tkinter import Tk

@@ -1,7 +1,7 @@
 """基本配置文件, 配置全局变量"""
 import sqlite3,os
 
-_local = False # 本地模式开关
+_local = True # 本地模式开关
 
 if _local:
     # 本地路径配置
@@ -31,4 +31,12 @@ csv_path = os.path.join(FILE_PATH, "发货", "快递账单")
 conn = sqlite3.connect(chemical_file)
 
 PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
+
+# 供应商字典
+Supplier_DICT = {'902518-11-0':{'code':'744099904','company':'濮阳惠成电子材料股份有限公司','tel':'0393-8961801'},
+                 '328-70-1':{'code':'137513392','company':'常州市仁科化工有限公司','tel':'13775109918'},
+                 '3096-56-8':{'code':'744099904','company':'濮阳惠成电子材料股份有限公司','tel':'0393-8961801'},
+                '109384-19-2':{'code':'563141835','company':'上海皓伯化工科技有限公司','tel':'13918007836'},
+                '358-23-6':{'code':'MA0832ML8','company':'中船重工（邯郸）派瑞特种气体有限公司','tel':'18146248368'},
+                '945-51-7':{'code':'563957295','company':'广东云星生物技术有限公司','tel':'18121060502'}}  
 
