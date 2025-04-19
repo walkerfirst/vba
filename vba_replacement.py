@@ -5,28 +5,27 @@ Python脚本替代VBA脚本
 import os
 import win32com.client,win32print
 from config import FILE_PATH,FAPIAO_PATH,PRINTER_NAME
-from window import create_window
-from tkinter import messagebox
 from datetime import datetime
+from window import window_askyesno
 
-# 配置全局变量
-# FAPIAO_PATH = File_PATH + '\发票'  # 发票保存路径
-# PRINTER_NAME = "HP LaserJet Professional M1213nf MFP" # 打印机名称
 
 class EXCELProcessor:
-    def __init__(self,excel,wb):
+    def __init__(self,excel,wb,root):
         self.wb = wb
         self.excel = excel
         self.sheet1 = self.wb.Sheets("sheet1")
         self.pl_sheet = self.wb.Sheets("PL")
         self.lable = self.wb.Sheets("标签")
-        
+        self.root = root
+
     def get_cell_value(self, cell_ref):
         """获取单元格值"""
         return self.sheet1.Range(cell_ref).Value
 
     def set_textbox_content(self, chinese, english):
-        """设置文本框内容"""
+        """设置文本框内容
+        新增逻辑：如果"情况说明fedex"中的内容已经是chinese，则跳过所有设置
+        """
         # 目标工作表列表
         sheets = {
             "PL": "公司名",
@@ -36,12 +35,26 @@ class EXCELProcessor:
             "情况说明fedex": "公司名"
         }
 
+        # 首先检查"情况说明fedex"是否需要更新
+        try:
+            sheet = self.wb.Sheets("情况说明fedex")
+            shape = sheet.Shapes("公司名")
+            current_text = shape.TextFrame2.TextRange.Text.strip()
+            if current_text == chinese.strip():
+                print("情况说明fedex内容已相同，跳过设置")
+                return  # 内容已相同，直接返回不执行任何设置
+        except Exception as e:
+            Errormsg = f"检查情况说明fedex时出错: {e}"
+            window_askyesno(self.root, "错误", Errormsg)
+            return
+
+        # 正常设置所有工作表内容
         for sheet_name, shape_name in sheets.items():
-            msg_window = create_window()
             try:
                 sheet = self.wb.Sheets(sheet_name)
                 shape = sheet.Shapes(shape_name)
                 text_range = shape.TextFrame2.TextRange
+                
                 if sheet_name == "销售合同":
                     text_range.Text = f"Supplier：\n{chinese}\n{english}"
                 elif sheet_name == "情况说明fedex":
@@ -49,11 +62,9 @@ class EXCELProcessor:
                 else:
                     text_range.Text = f"{chinese}\n\n{english}"
 
-                # messagebox.showinfo("提示", f"成功设置文本框内容: {sheet_name}", parent=msg_window)
             except Exception as e:
                 Errormsg = f"Error setting text in {sheet_name}: {e}"
-                # 显示确认对话框
-                messagebox.showerror("错误", Errormsg, parent=msg_window) # 显示错误信息对话框
+                window_askyesno(self.root, "错误", Errormsg)
 
         # 保存 Excel
         self.wb.Save()
@@ -153,32 +164,38 @@ class EXCELProcessor:
         consingee = self.get_cell_value("D2")  # 收件人
         
         # 构建确认信息
-        confirm_msg = f"发货信息确认:\n\n{tax}\n抬头：{company}\n收货人: {consingee}\n贸易方式：{model}\n\n" \
-                     f"运输商：{express}\n单号：{tracing}\n申报名称：{name}\n\n" \
-                     f"包装：{package}\n总价值：{ask_value}\n总件数: {pcs}\n" \
+        confirm_msg = f"{tax}\n{model}\n\n"\
+                    f"{company}\n{consingee}\n{tracing} ({express})\n\n"\
+                     f"{name}\n总价值：{ask_value}\n{pcs}  PCS\n\n"\
+                     f"包装：{package}\n" \
                      f"总净重：{nw}\n总毛重：{gw}"
         
-        confirm_window = create_window()
+        # 定义需要高亮的关键字及颜色
+        highlight_keywords = {
+            "不退税": "red",
+            "DHL": "orange",
+            "退税": "green",
+        }
+
         # 显示确认对话框
-        result = messagebox.askyesno("确认", confirm_msg, parent=confirm_window)
+        result = window_askyesno(self.root,"发货信息确认", confirm_msg,keywords=highlight_keywords)
         # 清理窗口
-        confirm_window.destroy()
         if not result:
-            print("用户取消运行脚本")
+            print("用户取消运行脚本") 
             return
         
-        # 更新文本框内容
-        self.set_textbox_content(chinese=company, english=english)  
+        # 更新excel 中的文本框内容
+        self.set_textbox_content(chinese=company, english=english)
 
         # 发货为快递的情况
         if express.lower() == "dhl":
             file_name= f"{express}_{tracing}_{invoice_no}" # 给客户单据的文件名
             file_name2 = f"上海盛傲_{tracing}" # 报关用单据的文件名
-            # 创建隐藏窗口用于对话框
-            dialog_window = create_window()
-            copies = self.set_labels(pcs)
+
+            copies = self.set_labels(pcs) # 获取打印份数并设置标签打印区域
+
             # 显示打印确认对话框
-            label_print_confirm = messagebox.askyesno("确认", f"是否打印DHL标签,共{copies}份？", parent=dialog_window)
+            label_print_confirm = window_askyesno(self.root,"确认", f"是否打印DHL标签, 共 {copies} 份？",keywords={'标签':"orange"})
             if label_print_confirm:
                 unit_net2 = self.wb.Sheets("data").Range("k2").Value # 单件净重2 (第二种包装)
                 if unit_net2:
@@ -193,12 +210,10 @@ class EXCELProcessor:
                 else:
                     self.print_sheet("标签", copies=copies)
 
-            file_print_confirm = messagebox.askyesno("确认", "是否打印DHL情况说明？", parent=dialog_window)
+            file_print_confirm = window_askyesno(self.root,"确认", "是否 打印 DHL情况说明？",keywords={'情况说明':"orange"})
             if file_print_confirm:
                 self.print_sheet("情况说明", copies=2) # 打印情况说明
 
-            # 销毁隐藏窗口
-            dialog_window.destroy()
             # 保存报关用单据
             file_list = ["invoice", "PL", "报关委托书", "报关单", "申报要素"]
             for _file in file_list:
@@ -234,7 +249,7 @@ class EXCELProcessor:
                        os.path.join(FAPIAO_PATH, f"{file_name}_CI.pdf"))
         
         """处理退税"""
-        if tax == "要退税" and  model == "一般贸易":
+        if tax == "退税" and  model == "一般贸易":
             if company == "上海盛傲化学有限公司":
                 # 获取订单ID
                 order_id = self.wb.Sheets("data").Range("S2").Value
@@ -255,8 +270,7 @@ class EXCELProcessor:
                 for tax_file in tax_file_list:
                     self.generate_pdf(tax_file, os.path.join(folder_path, f"{file_name}_{tax_file}.pdf"))
             else:
-                error_window = create_window()
-                messagebox.showerror("错误", "退税公司 不匹配", parent=error_window)
+                window_askyesno(self.root,"错误", "退税公司 不匹配 \n \n请检查发件抬头")
     
     def set_labels(self, pcs):
         """设置标签,并返回打印份数"""
@@ -270,7 +284,7 @@ class EXCELProcessor:
             self.lable.PageSetup.PrintArea = "$A$2:$F$18"
         else:
             N = pcs / 3
-            print(f"包裹数量: {pcs}, 计算出的N值: {N}")
+            # print(f"包裹数量: {pcs}, 计算出的N值: {N}")
             if isinstance(N,int):
                 copies = N
             else:

@@ -1,5 +1,6 @@
 import win32com.client as win32
 from config import cof_file
+import pythoncom
 
 def update_cof_excel(order_data):
     # 启动Excel应用
@@ -39,3 +40,7 @@ def update_cof_excel(order_data):
             wb.Close(False)  # 不保存关闭
     finally:
         excel.Quit()  # 退出Excel应用
+        # 强制释放 COM 对象
+        del wb
+        del excel
+        pythoncom.CoUninitialize()

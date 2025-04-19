@@ -18,30 +18,27 @@ from vba_replacement import EXCELProcessor
 from tkinter import Tk, StringVar, OptionMenu, Button, ttk
 from DHL_bill_process import ImportDHLBill
 
-# 定义 workbooks 对象
-excel = win32com.client.Dispatch("Excel.Application")
-excel.Visible = False  # 可以设置为 True 调试
-excel.DisplayAlerts = False # 禁用警告
-wb = excel.Workbooks.Open(shipment_file)
-
 def run():
     if not os.path.exists(shipment_file):
         msg_window = create_window()
         messagebox.showerror("错误", f"文件 {shipment_file} 不存在",parent=msg_window)
         return
     
+    # 获取发货数据
     ship_data = fetch_ship_data()
 
-    # 数据处理并执行vba程序
-    frame_layout(ship_data)
+    # 创建并展示主窗口
+    main_root = frame_layout(ship_data)
+    main_root.mainloop()  # 启动主循环
 
-def frame_layout(data):
+def frame_layout(data,geometry="420x350"):
     """设置主窗口布局,并传递选择的数据"""
 
     root = Tk()
     root.title("主窗口")
-    root.geometry("400x350")
-    root.resizable(False, False)
+    # 优先使用传入的geometry，否则使用默认值
+    root.geometry(geometry)  
+    root.resizable(True, True)
 
     # 添加窗口关闭协议处理
     def on_closing():
@@ -122,6 +119,7 @@ def frame_layout(data):
     button_frame.columnconfigure(1, weight=2)
     button_frame.columnconfigure(2, weight=2)
     button_frame.columnconfigure(3, weight=2)
+    button_frame.columnconfigure(4, weight=2)
     
     # 产地证按钮
     cof_btn = ttk.Button(button_frame,
@@ -135,14 +133,21 @@ def frame_layout(data):
                           text="删除",
                           command=lambda: delete_action(root,order_options[var_order.get()]),  # 传递root
                           width=5)
-    delete_btn.grid(row=0, column=1, padx=3) 
+    delete_btn.grid(row=0, column=1, padx=3)
+
+    # 刷新按钮
+    refresh_btn = ttk.Button(button_frame,
+                          text="刷新",
+                          command=lambda: refresh_data(root),  # 传递root
+                          width=5)
+    refresh_btn.grid(row=0, column=2, padx=3) 
 
     # 导入DHL账单按钮
     dhl_btn = ttk.Button(button_frame,
                           text="导入DHL账单",
                           command=lambda: ImportDHLBill(root),
                           width=10)
-    dhl_btn.grid(row=0, column=2, padx=3)
+    dhl_btn.grid(row=0, column=3, padx=3)
 
      # 修改：在点击 "确认发货" 时才获取当前选项
     confirm_btn = ttk.Button(button_frame,
@@ -156,17 +161,27 @@ def frame_layout(data):
                                }
                            ),
                            width=8)
-    confirm_btn.grid(row=0, column=3, padx=3) 
-    root.mainloop()
+    confirm_btn.grid(row=0, column=4, padx=3) 
+    return root  # 返回主窗口对象
 
 def process_data(root,frame_data):
     try:
-        root.destroy() # 关闭主窗口
+        # root.destroy() # 关闭主窗口
         # 读取数据库中的发货信息
         order_id = frame_data['order_id']
+        if order_id == '1':
+            messagebox.showerror("错误", "无订单",parent=root)
+            return
+        # 读取发货信息
         sql =f'select * from shipView where order_id = "{order_id}"'
         data = read_db(sql)[0]
-        # print(data)
+
+        # 定义 workbooks 对象
+        excel = win32com.client.Dispatch("Excel.Application")
+        excel.Visible = False  # 可以设置为 True 调试
+        excel.DisplayAlerts = False # 禁用警告
+        wb = excel.Workbooks.Open(shipment_file)
+
         # 定义工作表
         sheet = wb.Sheets('data')
         sm = wb.Sheets('情况说明')
@@ -177,7 +192,7 @@ def process_data(root,frame_data):
 
         # 数据预处理
         if data['tax'] == 1.0:
-            tax = '要退税'
+            tax = '退税'
             data['trade'] = "一般贸易"
             company = "上海盛傲化学有限公司"
         else:
@@ -214,18 +229,19 @@ def process_data(root,frame_data):
         sheet.Cells(2, 17).Value = data['date']
         sheet.Cells(2, 18).Value = data['total']
         sheet.Cells(2, 19).Value = data['order_id']
-        # wb.Save()
+
         # 运行excel 中的VBA程序
         # macro_name = "保存发票等文件.保存清关发票"
         # excel.Application.Run(macro_name)
         
         # 执行py程序(替换原有的VBA程序)
-        processor = EXCELProcessor(excel=excel,wb=wb)
+        print("开始执行VBA程序")
+        processor = EXCELProcessor(excel=excel,wb=wb,root=root)
         processor.process()
         wb.Save()
         wb.Close()
         excel.Quit()
-        root.quit() # 退出主程序
+        # root.quit() # 退出主程序
 
     except Exception as e:
         print(f"Error accessing Excel or opening workbook: {e}")
@@ -252,22 +268,29 @@ def delete_action(root,order_id):
         order_id = order_id
         sql = f'delete from ship where order_id = "{order_id}"'
         execute_db(sql)
-        refresh_data(root)  # 删除后立即刷新
         # 弹出窗口提示
         messagebox.showinfo("提示", f"订单 {order_id} 已删除",parent=root)
+        refresh_data(root)  # 删除后立即刷新
     else:
         messagebox.showerror("错误", "无订单",parent=root)
 
-def refresh_data(root):
-    """清空并重建窗口（接收数据参数）"""
-    # for widget in root.winfo_children():
-    #     widget.destroy()
-    root.destroy()  # 销毁当前窗口
-    new_data = fetch_ship_data()  # 获取最新数据
-    frame_layout(new_data)  # 使用传入的最新 data
+def refresh_data(old_root):
+    """清空并重建窗口"""
+
+    # 1. 销毁旧窗口
+    old_root.destroy()
+    
+    # 2. 获取最新数据
+    new_data = fetch_ship_data()
+    
+    # 3. 重建窗口（自动使用初始尺寸）
+    new_root = frame_layout(new_data)  
+    
+    # 4. 启动新窗口的主循环
+    new_root.mainloop()
 
 def fetch_ship_data():
-    """从数据库获取最新数据（示例）"""
+    """从数据库获取最新数据"""
    # 获取发货信息
     sql = 'select order_id,chinese from shipView where model="发货"'
     ship_dict = read_db(sql)
